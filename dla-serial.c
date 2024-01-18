@@ -2,6 +2,9 @@
 
 int main(int argc, char **argv)
 {
+    // Struct to calculate program execution time
+    struct timeval start, stop;
+
     // Getting variables from line command
     if (argc < 4)
     {
@@ -35,6 +38,9 @@ int main(int argc, char **argv)
     // DEBUG: Checking parameters
     printf("Parameters: %d %d %d %d %d %d\n", width, height, iterations, num_particles, initial_x, initial_y);
 
+    // ------------------- Starting point of measurement
+    gettimeofday(&start, NULL);
+
     // Inizialize the grid dynamically, in order to avoid segmentation fault with sizes too large
     // 0 = empty cell
     // 1 = crystal
@@ -63,8 +69,32 @@ int main(int argc, char **argv)
     {
         particles[i].x = rand() % width;
         particles[i].y = rand() % height;
-        printf("Particella %d posizione x: %d y: %d\n", i, particles[i].x, particles[i].y);
+        // printf("Particella %d posizione x: %d y: %d\n", i, particles[i].x, particles[i].y);
     }
+
+    // Starting simulation
+    for (int i = 0; i < iterations; i++)
+    {
+        // For each particle simulate Brownian motion, then examine the surroundings for crystallized particles.
+        for (int p = 0; p < num_particles; p++)
+        {
+            // Generate random number among -1, 0 and 1
+            int randomStepX = rand() % 3 - 1;
+            int randomStepY = rand() % 3 - 1;
+
+            // Update particle position
+            particles[i].x += randomStepX;
+            particles[i].y += randomStepY;
+
+            // Ensure particles stay within the grid size
+            particles[i].x = fmin(width, fmax(0, particles[i].x));
+            particles[i].y = fmin(height, fmax(0, particles[i].y));
+        }
+        printf("Iterazione %d finita\n", i);
+    }
+
+    // ------------------- End point of measurement
+    gettimeofday(&stop, NULL);
 
     // Free the allocated memory
     for (int i = 0; i < height; i++)
@@ -72,4 +102,7 @@ int main(int argc, char **argv)
         free(grid[i]);
     }
     free(grid);
+
+    printf("execution time:  %lu us\n", (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec);
+    return 0;
 }
