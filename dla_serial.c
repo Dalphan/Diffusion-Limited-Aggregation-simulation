@@ -5,41 +5,8 @@ int main(int argc, char **argv)
     // Struct to calculate program execution time
     struct timeval start, stop;
 
-    // Seed the random number generator with the current time
-    srand(time(NULL));
-
-    // Getting variables from line command
-    if (argc < 4)
-    {
-        printf("Not enough parameters\nUsage: ./serial width height iterations particles [initial_x] [initial_y]\n");
-        return 1;
-    }
-    int width = atoi(argv[1]);
-    int height = atoi(argv[2]);
-    int iterations = atoi(argv[3]);
-    int num_particles = atoi(argv[4]);
-
-    // If not given or over the boundaries, the default starting point is random
-    int initial_x, initial_y;
-    if (argc >= 6)
-    {
-        initial_x = atoi(argv[5]);
-        initial_y = atoi(argv[6]);
-
-        // Check if the given values are over the size of the grid
-        if (initial_x >= width)
-            initial_x = rand() % width;
-        if (initial_y >= height)
-            initial_y = rand() % height;
-    }
-    else
-    {
-        initial_x = rand() % width;
-        initial_y = rand() % height;
-    }
-
-    // DEBUG: Checking parameters
-    printf("Parameters: %d %d %d %d %d %d\n", width, height, iterations, num_particles, initial_x, initial_y);
+    int width, height, iterations, num_particles, initial_x, initial_y;
+    get_input_parameters(argc, argv, &width, &height, &iterations, &num_particles, &initial_x, &initial_y);
 
     // ------------------- Starting point of measurement
     gettimeofday(&start, NULL);
@@ -52,7 +19,7 @@ int main(int argc, char **argv)
     if (grid == NULL)
     {
         printf("Could not allocate memory\n");
-        return 1;
+        return -1;
     }
     for (int i = 0; i < height; i++)
     {
@@ -60,7 +27,7 @@ int main(int argc, char **argv)
         if (grid[i] == NULL)
         {
             printf("Could not allocate memory\n");
-            return 1;
+            return -1;
         }
         for (int j = 0; j < width; j++)
             grid[i][j] = EMPTY;
@@ -122,12 +89,11 @@ int main(int argc, char **argv)
         // DEBUG
         // printf("Iterazione %d finita\n", i);
     }
-
-    // Create image from grid
-    grid_to_img(width, height, grid);
-
     // ------------------- End point of measurement
     gettimeofday(&stop, NULL);
+
+    // Create image from grid
+    grid_to_ppm(width, height, grid, "dla_serial.ppm");
 
     // Free the allocated memory
     for (int i = 0; i < height; i++)
