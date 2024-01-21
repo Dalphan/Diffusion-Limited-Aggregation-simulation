@@ -1,5 +1,6 @@
 #include "dla.h"
 #include <omp.h>
+#include <string.h>
 
 int main(int argc, char **argv)
 {
@@ -40,7 +41,6 @@ int main(int argc, char **argv)
 
     // Starting crystal
     grid[initial_y][initial_x] = CRYSTAL;
-
     srand(time(NULL));
     particles_t particles[num_particles];
 
@@ -66,45 +66,47 @@ int main(int argc, char **argv)
         {
             my_num_particles += num_particles % thread_count;
         }
-        // In this versione the particles array is shared between threads, so it is not possible to remove
-        // crystallized particles from the array
-        int start_for = my_rank * my_num_particles;
-        int end_for = start_for + my_num_particles;
+        // Modified version with an array of particles for each thread, this way it is possible to remove crystallized
+        // particles without worrying about race conditions
+        int start_index = my_rank * my_num_particles;
+        int length = (start_index + my_num_particles) - start_index + 1;
+        particles_t my_particles[my_num_particles];
+        memcpy(my_particles, particles + start_index, length * sizeof(particles_t));
 
         for (int i = 0; i < iterations; i++)
         {
             // For each particle simulate Brownian motion, then examine the surroundings for crystallized particles.
-            for (int p = start_for; p < end_for; p++)
+            for (int p = 0; p < my_num_particles; p++)
             {
-                if (grid[particles[p].y][particles[p].x] == CRYSTAL)
-                    continue;
-
                 // Generate random number among -1, 0 and 1
                 int randomStepX = rand_r(&my_seed) % 3 - 1;
                 int randomStepY = rand_r(&my_seed) % 3 - 1;
 
                 // Update particle position
-                particles[p].x += randomStepX;
-                particles[p].y += randomStepY;
+                my_particles[p].x += randomStepX;
+                my_particles[p].y += randomStepY;
 
                 // Ensure particles stay within the grid size
-                particles[p].x = 0 > particles[p].x ? 0 : particles[p].x;
-                particles[p].x = width - 1 < particles[p].x ? width - 1 : particles[p].x;
-                particles[p].y = 0 > particles[p].y ? 0 : particles[p].y;
-                particles[p].y = height - 1 < particles[p].y ? height - 1 : particles[p].y;
+                my_particles[p].x = 0 > my_particles[p].x ? 0 : my_particles[p].x;
+                my_particles[p].x = width - 1 < my_particles[p].x ? width - 1 : my_particles[p].x;
+                my_particles[p].y = 0 > my_particles[p].y ? 0 : my_particles[p].y;
+                my_particles[p].y = height - 1 < my_particles[p].y ? height - 1 : my_particles[p].y;
 
                 // Now check surrounding cells for a crystallized particle
                 for (int y = -1; y <= 1; y++)
                 {
                     for (int x = -1; x <= 1; x++)
                     {
-                        int checkX = particles[p].x + x;
-                        int checkY = particles[p].y + y;
+                        int checkX = my_particles[p].x + x;
+                        int checkY = my_particles[p].y + y;
 
                         // Check if surrounding is within buondaries and the check if it's a crystal
                         if (checkX >= 0 && checkX < width && checkY >= 0 && checkY < height && grid[checkY][checkX] == CRYSTAL)
                         {
-                            grid[particles[p].y][particles[p].x] = CRYSTAL;
+                            grid[my_particles[p].y][my_particles[p].x] = CRYSTAL;
+                            // Remove crystallized particle from array of particles
+                            my_particles[p] = my_particles[my_num_particles - 1];
+                            my_num_particles--;
                         }
                     }
                 }
@@ -117,7 +119,7 @@ int main(int argc, char **argv)
     gettimeofday(&stop, NULL);
 
     // Create image from grid
-    grid_to_ppm(width, height, grid, "dla_openmp.ppm");
+    grid_to_ppm(width, height, grid, "dla_openmp_faster.ppm");
 
     // Free the allocated memory
     for (int i = 0; i < height; i++)

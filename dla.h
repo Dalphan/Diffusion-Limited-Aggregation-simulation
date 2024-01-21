@@ -3,13 +3,12 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/time.h>
-#include <math.h>
 
-struct particles_t
+typedef struct
 {
     int x;
     int y;
-};
+} particles_t;
 
 enum grid_values
 {

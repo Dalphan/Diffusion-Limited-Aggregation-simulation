@@ -37,7 +37,7 @@ int main(int argc, char **argv)
     grid[initial_y][initial_x] = CRYSTAL;
 
     // Giving each particles a random position on the grid
-    struct particles_t particles[num_particles];
+    particles_t particles[num_particles];
     for (int i = 0; i < num_particles; i++)
     {
         particles[i].x = rand() % width;

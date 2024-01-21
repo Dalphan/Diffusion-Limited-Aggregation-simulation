@@ -13,9 +13,9 @@ openmp: dla_openmp.c dla.h
 	gcc -Wall -g -fopenmp dla_openmp.c -o openmp
 
 run_openmp_xs:
-	./openmp 100 100 10000 2000 -1 -1 4
+	./openmp 100 100 10000 2000 -1 -1 12
 	feh dla_openmp.ppm
 
 run_openmp_s:
-	./openmp 500 500 50000 22000 -1 -1 4
+	./openmp 500 500 50000 22000 -1 -1 12
 	feh dla_openmp.ppm
