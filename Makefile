@@ -19,3 +19,12 @@ run_openmp_xs:
 run_openmp_s:
 	./openmp 500 500 50000 22000 -1 -1 12
 	feh dla_openmp.ppm
+
+faster_openmp: dla_openmp_faster.c dla.h
+	gcc -Wall -g -fopenmp dla_openmp_faster.c -o faster_openmp
+
+mpi: dla_mpi.c dla.h
+	mpicc -g -Wall dla_mpi.c -o mpi
+
+run_mpi:
+	mpirun -np 12 ./mpi 100 100 10000 1500 -1 -1

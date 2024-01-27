@@ -1,9 +1,15 @@
 #include "dla.h"
 
+extern void saveOneFrame(int **grid, int width, int height);
+extern void saveVideo(int frames);
+
 int main(int argc, char **argv)
 {
     // Struct to calculate program execution time
     struct timeval start, stop;
+
+    // VIDEO
+    int skip_frames = 10;
 
     int width, height, iterations, num_particles, initial_x, initial_y;
     get_input_parameters(argc, argv, &width, &height, &iterations, &num_particles, &initial_x, &initial_y);
@@ -88,6 +94,10 @@ int main(int argc, char **argv)
         }
         // DEBUG
         // printf("Iterazione %d finita\n", i);
+
+        // VIDEO
+        if (i % skip_frames == 0)
+            saveOneFrame(grid, width, height);
     }
     // ------------------- End point of measurement
     gettimeofday(&stop, NULL);
@@ -95,11 +105,14 @@ int main(int argc, char **argv)
     // Create image from grid
     grid_to_ppm(width, height, grid, "dla_serial.ppm");
 
+    // VIDEO
+    saveVideo(iterations / skip_frames / 60);
+
     // Free the allocated memory
     for (int i = 0; i < height; i++)
         free(grid[i]);
     free(grid);
 
-    printf("execution time:  %lu us\n", (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec);
+    printf("Execution time:  %lu us\n", (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec);
     return 0;
 }

@@ -11,7 +11,7 @@ int main(int argc, char **argv)
     get_input_parameters(argc, argv, &width, &height, &iterations, &num_particles, &initial_x, &initial_y);
 
     int thread_count = 1;
-    if (argc >= 7)
+    if (argc >= 8)
         thread_count = atoi(argv[7]);
 
     // ------------------- Starting point of measurement
@@ -48,7 +48,7 @@ int main(int argc, char **argv)
 #pragma omp parallel num_threads(thread_count)
     {
         int my_rank = omp_get_thread_num();
-        unsigned int my_seed = time(NULL) ^ my_rank;
+        unsigned int my_seed = time(NULL) + my_rank;
 
         // Giving each particles a random position on the grid, parallelized for each thread
 #pragma omp for
@@ -69,7 +69,7 @@ int main(int argc, char **argv)
         // Modified version with an array of particles for each thread, this way it is possible to remove crystallized
         // particles without worrying about race conditions
         int start_index = my_rank * my_num_particles;
-        int length = (start_index + my_num_particles) - start_index + 1;
+        int length = (start_index + my_num_particles) - start_index;
         particles_t my_particles[my_num_particles];
         memcpy(my_particles, particles + start_index, length * sizeof(particles_t));
 
@@ -126,6 +126,6 @@ int main(int argc, char **argv)
         free(grid[i]);
     free(grid);
 
-    printf("execution time:  %lu us\n", (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec);
+    printf("Execution time:  %lu us\n", (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec);
     return 0;
 }
