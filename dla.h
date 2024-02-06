@@ -63,6 +63,8 @@ void grid_to_ppm(int width, int height, int **griglia, char *file_name)
     {
         for (int j = 0; j < width; j++)
         {
+            printf(" I E J SONO %d %d ", i, j);
+            printf("VALORE GRIGLIA %d\n", griglia[i][j]);
             fprintf(ppm_file, "%i %i %i   ", griglia[i][j], griglia[i][j], griglia[i][j]);
         }
         fprintf(ppm_file, "\n");

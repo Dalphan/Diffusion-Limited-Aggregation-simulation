@@ -9,7 +9,7 @@ int main(int argc, char **argv)
     struct timeval start, stop;
 
     // VIDEO
-    int skip_frames = 10;
+    // int skip_frames = 20;
 
     int width, height, iterations, num_particles, initial_x, initial_y;
     get_input_parameters(argc, argv, &width, &height, &iterations, &num_particles, &initial_x, &initial_y);
@@ -96,8 +96,8 @@ int main(int argc, char **argv)
         // printf("Iterazione %d finita\n", i);
 
         // VIDEO
-        if (i % skip_frames == 0)
-            saveOneFrame(grid, width, height);
+        // if (i % skip_frames == 0)
+        //     saveOneFrame(grid, width, height);
     }
     // ------------------- End point of measurement
     gettimeofday(&stop, NULL);
@@ -106,7 +106,7 @@ int main(int argc, char **argv)
     grid_to_ppm(width, height, grid, "dla_serial.ppm");
 
     // VIDEO
-    saveVideo(iterations / skip_frames / 60);
+    // saveVideo(iterations / skip_frames / 60);
 
     // Free the allocated memory
     for (int i = 0; i < height; i++)
