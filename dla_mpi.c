@@ -25,15 +25,12 @@ int main(int argc, char **argv)
     // MPI_Bcast(&initial_x, 1, MPI_INT, 0, MPI_COMM_WORLD);
     // MPI_Bcast(&initial_y, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    // DEBUG
-    // printf("Thread %d, var %d %d %d %d %d %d\n", my_rank, width, height, iterations, num_particles, initial_x, initial_y);
-
     // ------------------- Starting point of measurement
     MPI_Barrier(MPI_COMM_WORLD);
     my_start = MPI_Wtime();
 
     // In this version only the first thread has the grid
-    int **grid;
+    int *grid;
     MPI_Win window;
     if (my_rank == 0)
     {
@@ -41,42 +38,43 @@ int main(int argc, char **argv)
         // 255 = empty cell
         // 1 = crystal
         // check enum grid_values
-        MPI_Alloc_mem(height * sizeof(int *), MPI_INFO_NULL, &grid);
-        if (grid == NULL)
-        {
-            printf("Could not allocate memory\n");
-            return -1;
-        }
+        // MPI_Alloc_mem((MPI_Aint)(height * width * sizeof(int)), MPI_INFO_NULL, &grid);
+        // for (int i = 0; i < height; i++)
+        // {
+        //     for (int j = 0; j < width; j++)
+        //         // grid[i][j] = EMPTY;
+        //         grid[i * width + j] = EMPTY;
+        // }
+
+        // // Starting crystal
+        // grid[initial_y * width + initial_x] = CRYSTAL;
+
+        // // Creating window for other threads
+        // MPI_Win_create(&grid[0], (MPI_Aint)(height * width * sizeof(int)), sizeof(int), MPI_INFO_NULL, MPI_COMM_WORLD, &window);
+
+        MPI_Win_allocate((MPI_Aint)(height * width * sizeof(int)), sizeof(int), MPI_INFO_NULL, MPI_COMM_WORLD, &grid, &window);
+
         for (int i = 0; i < height; i++)
         {
-            MPI_Alloc_mem(width * sizeof(int), MPI_INFO_NULL, &grid[i]);
-            if (grid[i] == NULL)
-            {
-                printf("Could not allocate memory\n");
-                return -1;
-            }
             for (int j = 0; j < width; j++)
-                grid[i][j] = EMPTY;
+                // grid[i][j] = EMPTY;
+                grid[i * width + j] = EMPTY;
         }
 
-        // Starting crystal
-        grid[initial_y][initial_x] = CRYSTAL;
-
-        // Creating window for other threads
-        MPI_Win_create(grid, height * width * sizeof(int), sizeof(int), MPI_INFO_NULL, MPI_COMM_WORLD, &window);
+        grid[initial_y * width + initial_x] = CRYSTAL;
     }
     else
     {
         // Window for other threads
-        MPI_Win_create(NULL, 0, 1, MPI_INFO_NULL, MPI_COMM_WORLD, &window);
-        // Associate windows object to grid
-        // MPI_Win_attach(window, grid, height * width * sizeof(int));
+        // MPI_Win_create(NULL, 0, 1, MPI_INFO_NULL, MPI_COMM_WORLD, &window);
+
+        MPI_Win_allocate(0, 1, MPI_INFO_NULL, MPI_COMM_WORLD, &grid, &window);
     }
 
     // Dividing particles for each thread
     int my_num_particles = num_particles / thread_count;
     if (my_rank == 0)
-        my_num_particles = num_particles % thread_count;
+        my_num_particles += num_particles % thread_count;
     particles_t my_particles[my_num_particles];
 
     // Seed the random number generator for each thread
@@ -90,6 +88,14 @@ int main(int argc, char **argv)
         // my_particles[i][2] = 0;
         // printf("Particella %d posizione x: %d y: %d\n", i, my_particles[i][0], my_particles[i][1]);
     }
+
+    int trewidth = 3 * width;
+    int buffer[trewidth];
+    int crystalize = 0;
+    MPI_Aint position;
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
     // Starting simulation
     for (int i = 0; i < iterations; i++)
     {
@@ -116,9 +122,54 @@ int main(int argc, char **argv)
             my_particles[p].y = height - 1 < my_particles[p].y ? height - 1 : my_particles[p].y;
 
             // Check if the particles has to be crystallized
+            // printf("Posizione particella: %d %d\n", my_particles[p].x, my_particles[p].y);
+            // for (int y = -1; y <= 1; y++)
+            // {
+            //     for (int x = -1; x <= 1; x++)
+            //     {
+            //         int checkX = my_particles[p].x + x;
+            //         int checkY = my_particles[p].y + y;
+
+            //         // Check if surrounding is within buondaries and the check if it's a crystal
+            //         if (checkX >= 0 && checkX < width && checkY >= 0 && checkY < height)
+            //         {
+            //             position = (MPI_Aint)(width * checkY + checkX);
+
+            //             MPI_Win_lock(MPI_LOCK_SHARED, 0, 0, window);
+            //             MPI_Get(&check, 1, MPI_INT, 0, position, 1, MPI_INT, window);
+            //             MPI_Win_unlock(0, window);
+
+            //             // printf("VALORE CELLA %d in posizione %ld\n", check[0], position);
+            //             if (check == CRYSTAL)
+            //             {
+            //                 // printf("NEED TO CRYSTALIZE\n");
+            //                 crystalize = 1;
+            //                 break;
+            //             }
+            //         }
+            //     }
+            //     if (crystalize)
+            //         break;
+            // }
+
+            position = ((my_particles[p].y == 0 ? 1 : my_particles[p].y) - 1) * width;
             MPI_Win_lock(MPI_LOCK_SHARED, 0, 0, window);
-            int crystalize = 0;
-            MPI_Aint position;
+            MPI_Get(&buffer, trewidth, MPI_INT, 0, position, trewidth, MPI_INT, window);
+            MPI_Win_unlock(0, window);
+
+            buffer[(my_particles[p].y == 0 ? 0 : 1) * width + my_particles[p].x] = 2;
+
+            // printf("BUFFER da posizione %ld per particella in posizione y %d x %d \n", position, my_particles[p].y, my_particles[p].x);
+            // for (int y = 0; y < 3; y++)
+            // {
+            //     printf("RIGA %d ", y);
+            //     for (int x = 0; x < width; x++)
+            //     {
+            //         printf("%d ", buffer[y * width + x]);
+            //     }
+            //     printf("\n");
+            // }
+
             for (int y = -1; y <= 1; y++)
             {
                 for (int x = -1; x <= 1; x++)
@@ -129,42 +180,59 @@ int main(int argc, char **argv)
                     // Check if surrounding is within buondaries and the check if it's a crystal
                     if (checkX >= 0 && checkX < width && checkY >= 0 && checkY < height)
                     {
-                        position = (MPI_Aint)width * checkY + checkX;
-
-                        int check;
-                        MPI_Get(&check, 1, MPI_INT, 0, position, 1, MPI_INT, window);
-
-                        if (check == CRYSTAL)
+                        // printf("VALORE CELLA %d in posizione %ld \n", buffer[(y + 1) * width + checkX], position + ((y + 1) * width + checkX));
+                        if (buffer[(y + 1) * width + checkX] == CRYSTAL)
                         {
+                            // printf("NEED TO CRYSTALIZE\n");
                             crystalize = 1;
                             break;
                         }
                     }
                 }
+                if (crystalize)
+                    break;
             }
-            MPI_Win_unlock(0, window);
 
-            // Crystalize the particle
             // Crystalize the particle
             if (crystalize)
             {
+                position = (MPI_Aint)(width * my_particles[p].y + my_particles[p].x);
+                int value = CRYSTAL;
                 MPI_Win_lock(MPI_LOCK_EXCLUSIVE, 0, 0, window);
-                // grid[my_particles[p].x][my_particles[p].y] = CRYSTAL;
-
-                position = (MPI_Aint)width * my_particles[p].y + my_particles[p].x;
-                int value = 1;
                 MPI_Put(&value, 1, MPI_INT, 0, position, 1, MPI_INT, window);
-
                 MPI_Win_unlock(0, window);
 
                 my_particles[p] = my_particles[my_num_particles - 1];
                 my_num_particles--;
+                p--;
+                crystalize = 0;
             }
         }
-
         // DEBUG
-        printf("Iterazione %d finita di rank %d\n", i, my_rank);
+        // if (i % 100 == 0)
+        //     printf("Iterazione %d finita di rank %d\n", i, my_rank);
     }
+
+    // DEBUG
+    // if (my_rank == 1)
+    // {
+    //     printf("width and height %d %d\n", width, height);
+    //     int value = 0;
+    //     for (int y = 0; y < height; y++)
+    //     {
+    //         printf("RIGA %d ", y);
+    //         for (int x = 0; x < width; x++)
+    //         {
+    //             MPI_Win_lock(MPI_LOCK_SHARED, 0, 0, window);
+    //             MPI_Get(&value, 1, MPI_INT, 0, (MPI_Aint)(y * width + x), 1, MPI_INT, window);
+    //             MPI_Win_unlock(0, window);
+
+    //             printf("%d ", value);
+    //         }
+    //         printf("\n");
+    //     }
+    // }
+
     // ------------------- End point of measurement
     my_finish = MPI_Wtime();
     my_elapsed = my_finish - my_start;
@@ -172,24 +240,17 @@ int main(int argc, char **argv)
 
     // Free the allocated memory
     MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Win_free(&window);
+
     if (my_rank == 0)
     {
         // Create image from grid
-        grid_to_ppm(width, height, grid, "dla_mpi.ppm");
+        array_to_ppm(width, height, grid, "dla_mpi.ppm");
 
-        for (int i = 0; i < height; i++)
-            MPI_Free_mem(grid[i]);
-        MPI_Free_mem(grid);
+        // MPI_Free_mem(grid);
+        printf("Execution time = %d us\n", (int)(my_elapsed * 1000000));
     }
-    else
-    {
-        // MPI_Win_detach(window, grid);
-    }
+    MPI_Win_free(&window);
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    if (my_rank == 0)
-        printf("Execution time = %f us\n", my_elapsed * 1000000);
     MPI_Finalize();
 
     return 0;

@@ -74,6 +74,7 @@ int main(int argc, char **argv)
             particles[p].y = height - 1 < particles[p].y ? height - 1 : particles[p].y;
 
             // Now check surrounding cells for a crystallized particle
+            int crystalized = 0;
             for (int y = -1; y <= 1; y++)
             {
                 for (int x = -1; x <= 1; x++)
@@ -88,8 +89,14 @@ int main(int argc, char **argv)
                         // Remove crystallized particle from array of particles
                         particles[p] = particles[num_particles - 1];
                         num_particles--;
+                        p--;
+
+                        crystalized = 1;
+                        break;
                     }
                 }
+                if (crystalized)
+                    break;
             }
         }
         // DEBUG

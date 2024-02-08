@@ -63,9 +63,25 @@ void grid_to_ppm(int width, int height, int **griglia, char *file_name)
     {
         for (int j = 0; j < width; j++)
         {
-            printf(" I E J SONO %d %d ", i, j);
-            printf("VALORE GRIGLIA %d\n", griglia[i][j]);
             fprintf(ppm_file, "%i %i %i   ", griglia[i][j], griglia[i][j], griglia[i][j]);
+        }
+        fprintf(ppm_file, "\n");
+    }
+    fclose(ppm_file);
+}
+
+void array_to_ppm(int width, int height, int *griglia, char *file_name)
+{
+    FILE *ppm_file = fopen(file_name, "w");
+    fprintf(ppm_file, "P3\n %d %d 255\n", width, height);
+
+    int position;
+    for (int i = 0; i < height; i++)
+    {
+        for (int j = 0; j < width; j++)
+        {
+            position = i * width + j;
+            fprintf(ppm_file, "%i %i %i   ", griglia[position], griglia[position], griglia[position]);
         }
         fprintf(ppm_file, "\n");
     }

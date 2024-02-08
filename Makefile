@@ -1,5 +1,9 @@
 serial: dla_serial.c dla.h
-	gcc -Wall dla_serial.c -o serial
+	gcc dla_serial.c -o serial -L. -lcimg_wrapper -lstdc++ -lX11
+
+run_serial_xs:
+	./serial 100 100 10000 2000
+	feh dla_serial.ppm
 
 run_serial_s:
 	./serial 500 500 50000 22000
