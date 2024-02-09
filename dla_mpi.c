@@ -38,20 +38,6 @@ int main(int argc, char **argv)
         // 255 = empty cell
         // 1 = crystal
         // check enum grid_values
-        // MPI_Alloc_mem((MPI_Aint)(height * width * sizeof(int)), MPI_INFO_NULL, &grid);
-        // for (int i = 0; i < height; i++)
-        // {
-        //     for (int j = 0; j < width; j++)
-        //         // grid[i][j] = EMPTY;
-        //         grid[i * width + j] = EMPTY;
-        // }
-
-        // // Starting crystal
-        // grid[initial_y * width + initial_x] = CRYSTAL;
-
-        // // Creating window for other threads
-        // MPI_Win_create(&grid[0], (MPI_Aint)(height * width * sizeof(int)), sizeof(int), MPI_INFO_NULL, MPI_COMM_WORLD, &window);
-
         MPI_Win_allocate((MPI_Aint)(height * width * sizeof(int)), sizeof(int), MPI_INFO_NULL, MPI_COMM_WORLD, &grid, &window);
 
         for (int i = 0; i < height; i++)
@@ -66,8 +52,6 @@ int main(int argc, char **argv)
     else
     {
         // Window for other threads
-        // MPI_Win_create(NULL, 0, 1, MPI_INFO_NULL, MPI_COMM_WORLD, &window);
-
         MPI_Win_allocate(0, 1, MPI_INFO_NULL, MPI_COMM_WORLD, &grid, &window);
     }
 
@@ -91,20 +75,21 @@ int main(int argc, char **argv)
 
     int trewidth = 3 * width;
     int buffer[trewidth];
-    int crystalize = 0;
+    particles_t particles_to_crystalize[width];
+    int n_to_crystalize = 0;
+    // int crystalize = 0;
     MPI_Aint position;
+    MPI_Request req;
 
     MPI_Barrier(MPI_COMM_WORLD);
 
     // Starting simulation
+    MPI_Win_lock(MPI_LOCK_SHARED, 0, 0, window);
     for (int i = 0; i < iterations; i++)
     {
         // For each particle simulate Brownian motion.
         for (int p = 0; p < my_num_particles; p++)
         {
-            // if (my_particles[p][2] == 1)
-            //     continue;
-
             // Generate random number among -1, 0 and 1
             int randomStepX = rand() % 3 - 1;
             int randomStepY = rand() % 3 - 1;
@@ -122,42 +107,13 @@ int main(int argc, char **argv)
             my_particles[p].y = height - 1 < my_particles[p].y ? height - 1 : my_particles[p].y;
 
             // Check if the particles has to be crystallized
-            // printf("Posizione particella: %d %d\n", my_particles[p].x, my_particles[p].y);
-            // for (int y = -1; y <= 1; y++)
-            // {
-            //     for (int x = -1; x <= 1; x++)
-            //     {
-            //         int checkX = my_particles[p].x + x;
-            //         int checkY = my_particles[p].y + y;
-
-            //         // Check if surrounding is within buondaries and the check if it's a crystal
-            //         if (checkX >= 0 && checkX < width && checkY >= 0 && checkY < height)
-            //         {
-            //             position = (MPI_Aint)(width * checkY + checkX);
-
-            //             MPI_Win_lock(MPI_LOCK_SHARED, 0, 0, window);
-            //             MPI_Get(&check, 1, MPI_INT, 0, position, 1, MPI_INT, window);
-            //             MPI_Win_unlock(0, window);
-
-            //             // printf("VALORE CELLA %d in posizione %ld\n", check[0], position);
-            //             if (check == CRYSTAL)
-            //             {
-            //                 // printf("NEED TO CRYSTALIZE\n");
-            //                 crystalize = 1;
-            //                 break;
-            //             }
-            //         }
-            //     }
-            //     if (crystalize)
-            //         break;
-            // }
-
             position = ((my_particles[p].y == 0 ? 1 : my_particles[p].y) - 1) * width;
-            MPI_Win_lock(MPI_LOCK_SHARED, 0, 0, window);
+            // MPI_Win_lock(MPI_LOCK_SHARED, 0, 0, window);
             MPI_Get(&buffer, trewidth, MPI_INT, 0, position, trewidth, MPI_INT, window);
-            MPI_Win_unlock(0, window);
+            MPI_Win_flush(0, window);
+            // MPI_Win_unlock(0, window);
 
-            buffer[(my_particles[p].y == 0 ? 0 : 1) * width + my_particles[p].x] = 2;
+            // buffer[(my_particles[p].y == 0 ? 0 : 1) * width + my_particles[p].x] = 2;
 
             // printf("BUFFER da posizione %ld per particella in posizione y %d x %d \n", position, my_particles[p].y, my_particles[p].x);
             // for (int y = 0; y < 3; y++)
@@ -172,46 +128,82 @@ int main(int argc, char **argv)
 
             for (int y = -1; y <= 1; y++)
             {
+                int checkY = my_particles[p].y + y;
+                if (checkY < 0 || checkY >= height)
+                    continue;
+
                 for (int x = -1; x <= 1; x++)
                 {
                     int checkX = my_particles[p].x + x;
-                    int checkY = my_particles[p].y + y;
 
                     // Check if surrounding is within buondaries and the check if it's a crystal
-                    if (checkX >= 0 && checkX < width && checkY >= 0 && checkY < height)
+                    if (checkX >= 0 && checkX < width && buffer[(y + 1) * width + checkX] == CRYSTAL)
                     {
-                        // printf("VALORE CELLA %d in posizione %ld \n", buffer[(y + 1) * width + checkX], position + ((y + 1) * width + checkX));
-                        if (buffer[(y + 1) * width + checkX] == CRYSTAL)
-                        {
-                            // printf("NEED TO CRYSTALIZE\n");
-                            crystalize = 1;
-                            break;
-                        }
+                        // In order to exit outer loop
+                        y = 2;
+
+                        // Save particle to crystalize
+                        particles_to_crystalize[n_to_crystalize] = my_particles[p];
+                        n_to_crystalize++;
+
+                        // Remove crystalized particle
+                        my_particles[p] = my_particles[my_num_particles - 1];
+                        my_num_particles--;
+                        p--;
+                        break;
                     }
                 }
-                if (crystalize)
-                    break;
+                // if (crystalize)
+                //     break;
             }
 
             // Crystalize the particle
-            if (crystalize)
-            {
-                position = (MPI_Aint)(width * my_particles[p].y + my_particles[p].x);
-                int value = CRYSTAL;
-                MPI_Win_lock(MPI_LOCK_EXCLUSIVE, 0, 0, window);
-                MPI_Put(&value, 1, MPI_INT, 0, position, 1, MPI_INT, window);
-                MPI_Win_unlock(0, window);
+            // if (crystalize)
+            // {
+            //     position = (MPI_Aint)(width * my_particles[p].y + my_particles[p].x);
+            //     int value = CRYSTAL;
+            //     MPI_Win_lock(MPI_LOCK_EXCLUSIVE, 0, 0, window);
+            //     MPI_Put(&value, 1, MPI_INT, 0, position, 1, MPI_INT, window);
+            //     MPI_Win_unlock(0, window);
 
-                my_particles[p] = my_particles[my_num_particles - 1];
-                my_num_particles--;
-                p--;
-                crystalize = 0;
-            }
+            //     my_particles[p] = my_particles[my_num_particles - 1];
+            //     my_num_particles--;
+            //     p--;
+            //     crystalize = 0;
+            // }
         }
+
+        // MPI_Barrier(MPI_COMM_WORLD);
+
+        if (n_to_crystalize > 0)
+        {
+            int value = CRYSTAL;
+            // MPI_Win_lock(MPI_LOCK_SHARED, 0, 0, window);
+
+            // MPI_Win_unlock(0, window);
+            // MPI_Win_lock(MPI_LOCK_SHARED, 0, 0, window);
+            for (int i = 0; i < n_to_crystalize; i++)
+            {
+                position = (MPI_Aint)(width * particles_to_crystalize[i].y + particles_to_crystalize[i].x);
+                // MPI_Put(&value, 1, MPI_INT, 0, position, 1, MPI_INT, window);
+                MPI_Rput(&value, 1, MPI_INT, 0, position, 1, MPI_INT, window, &req);
+            }
+            // MPI_Win_flush(0, window);
+
+            // MPI_Win_unlock(0, window);
+
+            // MPI_Win_unlock(0, window);
+            // MPI_Win_lock(MPI_LOCK_SHARED, 0, 0, window);
+            n_to_crystalize = 0;
+        }
+
+        // MPI_Barrier(MPI_COMM_WORLD);
+
         // DEBUG
         // if (i % 100 == 0)
         //     printf("Iterazione %d finita di rank %d\n", i, my_rank);
     }
+    MPI_Win_unlock(0, window);
 
     // DEBUG
     // if (my_rank == 1)

@@ -4,7 +4,7 @@
 
 int main(int argc, char **argv)
 {
-    // Struct to calculate program execution time
+    // Struct to measure program execution time
     struct timeval start, stop;
 
     int width, height, iterations, num_particles, initial_x, initial_y;
@@ -95,18 +95,25 @@ int main(int argc, char **argv)
                 // Now check surrounding cells for a crystallized particle
                 for (int y = -1; y <= 1; y++)
                 {
+                    int checkY = my_particles[p].y + y;
+                    if (checkY < 0 || checkY >= height)
+                        continue;
+
                     for (int x = -1; x <= 1; x++)
                     {
                         int checkX = my_particles[p].x + x;
-                        int checkY = my_particles[p].y + y;
 
                         // Check if surrounding is within buondaries and the check if it's a crystal
-                        if (checkX >= 0 && checkX < width && checkY >= 0 && checkY < height && grid[checkY][checkX] == CRYSTAL)
+                        if (checkX >= 0 && checkX < width && grid[checkY][checkX] == CRYSTAL)
                         {
                             grid[my_particles[p].y][my_particles[p].x] = CRYSTAL;
                             // Remove crystallized particle from array of particles
                             my_particles[p] = my_particles[my_num_particles - 1];
                             my_num_particles--;
+                            p--;
+
+                            y = 2; // In order to exit outer loop
+                            break;
                         }
                     }
                 }

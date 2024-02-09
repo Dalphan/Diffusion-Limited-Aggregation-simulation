@@ -3,7 +3,7 @@
 
 int main(int argc, char **argv)
 {
-    // Struct to calculate program execution time
+    // Struct to measure program execution time
     struct timeval start, stop;
 
     int width, height, iterations, num_particles, initial_x, initial_y;
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
         {
             my_num_particles += num_particles % thread_count;
         }
-        // In this versione the particles array is shared between threads, so it is not possible to remove
+        // In this version the particles array is shared between threads, so it is not possible to remove
         // crystallized particles from the array
         int start_for = my_rank * my_num_particles;
         int end_for = start_for + my_num_particles;
@@ -96,15 +96,20 @@ int main(int argc, char **argv)
                 // Now check surrounding cells for a crystallized particle
                 for (int y = -1; y <= 1; y++)
                 {
+                    int checkY = particles[p].y + y;
+                    if (checkY < 0 || checkY >= height)
+                        continue;
+
                     for (int x = -1; x <= 1; x++)
                     {
                         int checkX = particles[p].x + x;
-                        int checkY = particles[p].y + y;
 
                         // Check if surrounding is within buondaries and the check if it's a crystal
-                        if (checkX >= 0 && checkX < width && checkY >= 0 && checkY < height && grid[checkY][checkX] == CRYSTAL)
+                        if (checkX >= 0 && checkX < width && grid[checkY][checkX] == CRYSTAL)
                         {
                             grid[particles[p].y][particles[p].x] = CRYSTAL;
+                            y = 2; // In order to exit outer loop;
+                            break;
                         }
                     }
                 }
