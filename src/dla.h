@@ -3,6 +3,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <string.h>
 
 typedef struct
 {
@@ -15,6 +16,8 @@ enum grid_values
     EMPTY = 255,
     CRYSTAL = 1
 };
+
+const char *directory = "res/";
 
 void get_input_parameters(int argc, char **argv, int *width, int *height, int *iterations, int *num_particles, int *initial_x, int *initial_y)
 {
@@ -56,7 +59,9 @@ void get_input_parameters(int argc, char **argv, int *width, int *height, int *i
 
 void grid_to_ppm(int width, int height, int **griglia, char *file_name)
 {
-    FILE *ppm_file = fopen(file_name, "w");
+    char path[100];
+    snprintf(path, sizeof(path), "%s%s", directory, file_name);
+    FILE *ppm_file = fopen(path, "w");
     fprintf(ppm_file, "P3\n %d %d 255\n", width, height);
 
     for (int i = 0; i < height; i++)
@@ -72,7 +77,9 @@ void grid_to_ppm(int width, int height, int **griglia, char *file_name)
 
 void array_to_ppm(int width, int height, int *griglia, char *file_name)
 {
-    FILE *ppm_file = fopen(file_name, "w");
+    char path[100];
+    snprintf(path, sizeof(path), "%s%s", directory, file_name);
+    FILE *ppm_file = fopen(path, "w");
     fprintf(ppm_file, "P3\n %d %d 255\n", width, height);
 
     int position;

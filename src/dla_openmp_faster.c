@@ -1,6 +1,5 @@
 #include "dla.h"
 #include <omp.h>
-#include <string.h>
 
 int main(int argc, char **argv)
 {

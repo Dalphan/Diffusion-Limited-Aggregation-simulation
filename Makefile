@@ -1,34 +1,77 @@
-serial: dla_serial.c dla.h
-	gcc dla_serial.c -o serial -L. -lcimg_wrapper -lstdc++ -lX11
+# Compiler options
+CC := gcc
+CXX := g++
+CFLAGS := -Wall -g
+CXXFLAGS := -Wall -g
 
-run_serial_xs:
-	./serial 100 100 10000 2000
-	feh dla_serial.ppm
+# Directories
+SRC_DIR := src
+BIN_DIR := bin
+RES_DIR := res
+LIB_DIR := lib
 
-run_serial_s:
-	./serial 500 500 50000 22000
-	feh dla_serial.ppm
+# Targets
+SERIAL := $(BIN_DIR)/serial
+OPENMP := $(BIN_DIR)/openmp
+FASTER_OPENMP := $(BIN_DIR)/faster_openmp
+MPI := $(BIN_DIR)/mpi
+CIMG_WRAPPER := $(BIN_DIR)/cimg_wrapper.so
 
-run_serial_xl:
-	./serial 1000 1000 100000 100000
-	feh dla_serial.ppm
+# Phony targets
+.PHONY: all clean
 
-openmp: dla_openmp.c dla.h
-	gcc -Wall -g -fopenmp dla_openmp.c -o openmp
+all: $(SERIAL) $(OPENMP) $(FASTER_OPENMP) $(MPI) $(CIMG_WRAPPER)
 
-run_openmp_xs:
-	./openmp 100 100 10000 2000 -1 -1 12
-	feh dla_openmp.ppm
+serial: $(SRC_DIR)/dla_serial.c $(SRC_DIR)/dla.h | $(BIN_DIR)
+	$(CC) $(CFLAGS) $< -o $(BIN_DIR)/$@ -L$(BIN_DIR) -lcimg_wrapper -lstdc++ -lX11
 
-run_openmp_s:
-	./openmp 500 500 50000 22000 -1 -1 12
-	feh dla_openmp.ppm
+openmp: $(SRC_DIR)/dla_openmp.c $(SRC_DIR)/dla.h | $(BIN_DIR)
+	$(CC) $(CFLAGS) -fopenmp $< -o $(BIN_DIR)/$@
 
-faster_openmp: dla_openmp_faster.c dla.h
-	gcc -Wall -g -fopenmp dla_openmp_faster.c -o faster_openmp
+faster_openmp: $(SRC_DIR)/dla_openmp_faster.c $(SRC_DIR)/dla.h | $(BIN_DIR)
+	$(CC) $(CFLAGS) -fopenmp $< -o $(BIN_DIR)/$@
 
-mpi: dla_mpi.c dla.h
-	mpicc -g -Wall dla_mpi.c -o mpi
+mpi: $(SRC_DIR)/dla_mpi.c $(SRC_DIR)/dla.h | $(BIN_DIR)
+	mpicc -g -Wall $< -o $(BIN_DIR)/$@
 
-run_mpi:
-	mpirun -np 12 ./mpi 100 100 10000 1500 -1 -1
+2mpi: $(SRC_DIR)/dla_2mpi.c $(SRC_DIR)/dla.h | $(BIN_DIR)
+	mpicc -g -Wall $< -o $(BIN_DIR)/$@
+
+3mpi: $(SRC_DIR)/dla_3mpi.c $(SRC_DIR)/dla.h | $(BIN_DIR)
+	mpicc -g -Wall $< -o $(BIN_DIR)/$@
+
+cimg_wrapper: $(SRC_DIR)/cimg_wrapper.cpp | $(BIN_DIR)
+	$(CXX) -shared -fPIC -o $(BIN_DIR)/libcimg_wrapper.so $< -I$(LIB_DIR)/CImg/
+
+$(BIN_DIR):
+	mkdir -p $(BIN_DIR)
+
+clean:
+	rm -rf $(BIN_DIR)/*
+
+run_serial_xs: $(SERIAL)
+	$(SERIAL) 100 100 10000 2000
+	feh $(RES_DIR)/dla_serial.ppm
+
+run_serial_s: $(SERIAL)
+	$(SERIAL) 500 500 50000 22000
+	feh $(RES_DIR)/dla_serial.ppm
+
+run_serial_xl: $(SERIAL)
+	$(SERIAL) 1000 1000 100000 100000
+	feh $(RES_DIR)/dla_serial.ppm
+
+run_openmp_xs: $(OPENMP)
+	$(OPENMP) 100 100 10000 2000 -1 -1 12
+	feh $(RES_DIR)/dla_openmp.ppm
+
+run_openmp_s: $(OPENMP)
+	$(OPENMP) 500 500 50000 22000 -1 -1 12
+	feh $(RES_DIR)/dla_openmp.ppm
+
+run_faster_openmp_s: $(FASTER_OPENMP)
+	$(FASTER_OPENMP) 500 500 50000 22000 -1 -1 12
+	feh $(RES_DIR)/dla_openmp_faster.ppm
+
+run_mpi: $(MPI)
+	mpirun -np 12 $(MPI) 100 100 10000 1500 -1 -1
