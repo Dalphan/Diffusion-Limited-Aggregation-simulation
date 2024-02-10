@@ -48,7 +48,6 @@ int main(int argc, char **argv)
     {
         particles[i].x = rand() % width;
         particles[i].y = rand() % height;
-        // printf("Particella %d posizione x: %d y: %d\n", i, particles[i].x, particles[i].y);
     }
 
     // Starting simulation
@@ -66,10 +65,8 @@ int main(int argc, char **argv)
             particles[p].y += randomStepY;
 
             // Ensure particles stay within the grid size
-            // particles[p].x = fmin(width - 1, fmax(0, particles[p].x));
             particles[p].x = 0 > particles[p].x ? 0 : particles[p].x;
             particles[p].x = width - 1 < particles[p].x ? width - 1 : particles[p].x;
-            // particles[p].y = fmin(height - 1, fmax(0, particles[p].y));
             particles[p].y = 0 > particles[p].y ? 0 : particles[p].y;
             particles[p].y = height - 1 < particles[p].y ? height - 1 : particles[p].y;
 
@@ -99,9 +96,6 @@ int main(int argc, char **argv)
                 }
             }
         }
-        // DEBUG
-        // printf("Iterazione %d finita\n", i);
-
         // VIDEO
         // if (i % skip_frames == 0)
         //     saveOneFrame(grid, width, height);

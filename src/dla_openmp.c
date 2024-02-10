@@ -56,16 +56,13 @@ int main(int argc, char **argv)
         {
             particles[i].x = rand_r(&my_seed) % width;
             particles[i].y = rand_r(&my_seed) % height;
-            // DEBUG
-            // printf("Particella %d posizione x: %d y: %d\n", i, particles[i].x, particles[i].y);
         }
 
         // Starting simulation, partilces divided for each thread
         int my_num_particles = num_particles / thread_count;
         if (my_rank == 0)
-        {
             my_num_particles += num_particles % thread_count;
-        }
+
         // In this version the particles array is shared between threads, so it is not possible to remove
         // crystallized particles from the array
         int start_for = my_rank * my_num_particles;
@@ -114,8 +111,6 @@ int main(int argc, char **argv)
                     }
                 }
             }
-            // DEBUG
-            // printf("Iterazione %d finita del thread %d\n", i, my_rank);
         }
     }
     // ------------------- End point of measurement

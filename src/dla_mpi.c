@@ -69,15 +69,13 @@ int main(int argc, char **argv)
     {
         my_particles[i].x = rand() % width;
         my_particles[i].y = rand() % height;
-        // my_particles[i][2] = 0;
-        // printf("Particella %d posizione x: %d y: %d\n", i, my_particles[i][0], my_particles[i][1]);
     }
 
     int trewidth = 3 * width;
     int buffer[trewidth];
     particles_t particles_to_crystalize[width];
     int n_to_crystalize = 0;
-    // int crystalize = 0;
+
     MPI_Aint position;
     MPI_Request req;
 
@@ -113,19 +111,6 @@ int main(int argc, char **argv)
             MPI_Win_flush(0, window);
             // MPI_Win_unlock(0, window);
 
-            // buffer[(my_particles[p].y == 0 ? 0 : 1) * width + my_particles[p].x] = 2;
-
-            // printf("BUFFER da posizione %ld per particella in posizione y %d x %d \n", position, my_particles[p].y, my_particles[p].x);
-            // for (int y = 0; y < 3; y++)
-            // {
-            //     printf("RIGA %d ", y);
-            //     for (int x = 0; x < width; x++)
-            //     {
-            //         printf("%d ", buffer[y * width + x]);
-            //     }
-            //     printf("\n");
-            // }
-
             for (int y = -1; y <= 1; y++)
             {
                 int checkY = my_particles[p].y + y;
@@ -153,28 +138,12 @@ int main(int argc, char **argv)
                         break;
                     }
                 }
-                // if (crystalize)
-                //     break;
             }
-
-            // Crystalize the particle
-            // if (crystalize)
-            // {
-            //     position = (MPI_Aint)(width * my_particles[p].y + my_particles[p].x);
-            //     int value = CRYSTAL;
-            //     MPI_Win_lock(MPI_LOCK_EXCLUSIVE, 0, 0, window);
-            //     MPI_Put(&value, 1, MPI_INT, 0, position, 1, MPI_INT, window);
-            //     MPI_Win_unlock(0, window);
-
-            //     my_particles[p] = my_particles[my_num_particles - 1];
-            //     my_num_particles--;
-            //     p--;
-            //     crystalize = 0;
-            // }
         }
 
         // MPI_Barrier(MPI_COMM_WORLD);
 
+        // Crystallize the saved particles
         if (n_to_crystalize > 0)
         {
             int value = CRYSTAL;
@@ -198,32 +167,8 @@ int main(int argc, char **argv)
         }
 
         // MPI_Barrier(MPI_COMM_WORLD);
-
-        // DEBUG
-        // if (i % 100 == 0)
-        //     printf("Iterazione %d finita di rank %d\n", i, my_rank);
     }
     MPI_Win_unlock(0, window);
-
-    // DEBUG
-    // if (my_rank == 1)
-    // {
-    //     printf("width and height %d %d\n", width, height);
-    //     int value = 0;
-    //     for (int y = 0; y < height; y++)
-    //     {
-    //         printf("RIGA %d ", y);
-    //         for (int x = 0; x < width; x++)
-    //         {
-    //             MPI_Win_lock(MPI_LOCK_SHARED, 0, 0, window);
-    //             MPI_Get(&value, 1, MPI_INT, 0, (MPI_Aint)(y * width + x), 1, MPI_INT, window);
-    //             MPI_Win_unlock(0, window);
-
-    //             printf("%d ", value);
-    //         }
-    //         printf("\n");
-    //     }
-    // }
 
     // ------------------- End point of measurement
     my_finish = MPI_Wtime();
@@ -237,8 +182,6 @@ int main(int argc, char **argv)
     {
         // Create image from grid
         array_to_ppm(width, height, grid, "dla_mpi.ppm");
-
-        // MPI_Free_mem(grid);
         printf("Execution time = %d us\n", (int)(my_elapsed * 1000000));
     }
     MPI_Win_free(&window);
