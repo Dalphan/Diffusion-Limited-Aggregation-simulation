@@ -76,6 +76,7 @@ int main(int argc, char **argv)
     particles_t particles_to_crystalize[width];
     int n_to_crystalize = 0;
 
+    int value = CRYSTAL;
     MPI_Aint position;
     MPI_Request req;
 
@@ -106,10 +107,8 @@ int main(int argc, char **argv)
 
             // Check if the particles has to be crystallized
             position = ((my_particles[p].y == 0 ? 1 : my_particles[p].y) - 1) * width;
-            // MPI_Win_lock(MPI_LOCK_SHARED, 0, 0, window);
             MPI_Get(&buffer, trewidth, MPI_INT, 0, position, trewidth, MPI_INT, window);
             MPI_Win_flush(0, window);
-            // MPI_Win_unlock(0, window);
 
             for (int y = -1; y <= 1; y++)
             {
@@ -140,33 +139,22 @@ int main(int argc, char **argv)
                 }
             }
         }
-
-        // MPI_Barrier(MPI_COMM_WORLD);
+        // In this version, MPI_Raccumulate with MPI_REPLACE is utilized for updating the grid without shared memory.
+        // This approach ensures atomicity, making it faster than using an exclusive lock.
+        // Additionally, MPI_Raccumulate is non-blocking, unlike MPI_Accumulate, while MPI_Win_flush ensures the completion of all operations before proceeding
 
         // Crystallize the saved particles
         if (n_to_crystalize > 0)
         {
-            int value = CRYSTAL;
-            // MPI_Win_lock(MPI_LOCK_SHARED, 0, 0, window);
-
-            // MPI_Win_unlock(0, window);
-            // MPI_Win_lock(MPI_LOCK_SHARED, 0, 0, window);
             for (int i = 0; i < n_to_crystalize; i++)
             {
-                position = (MPI_Aint)(width * particles_to_crystalize[i].y + particles_to_crystalize[i].x);
                 // MPI_Put(&value, 1, MPI_INT, 0, position, 1, MPI_INT, window);
-                MPI_Rput(&value, 1, MPI_INT, 0, position, 1, MPI_INT, window, &req);
+                // MPI_Rput(&value, 1, MPI_INT, 0, position, 1, MPI_INT, window, &req);
+                MPI_Raccumulate(&value, 1, MPI_INT, 0, (MPI_Aint)(width * particles_to_crystalize[i].y + particles_to_crystalize[i].x), 1, MPI_INT, MPI_REPLACE, window, &req);
             }
-            // MPI_Win_flush(0, window);
-
-            // MPI_Win_unlock(0, window);
-
-            // MPI_Win_unlock(0, window);
-            // MPI_Win_lock(MPI_LOCK_SHARED, 0, 0, window);
+            MPI_Win_flush(0, window);
             n_to_crystalize = 0;
         }
-
-        // MPI_Barrier(MPI_COMM_WORLD);
     }
     MPI_Win_unlock(0, window);
 

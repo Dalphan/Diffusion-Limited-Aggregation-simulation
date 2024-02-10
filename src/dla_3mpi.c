@@ -156,7 +156,9 @@ int main(int argc, char **argv)
             }
         }
 
-        // In this version, wait for all process to simulate the motion for each particle, then update the grid
+        // In this version, the simulation waits for all processes to complete particle motion before updating the grid.
+        // This ensures that the grid reflects the latest particle positions collectively computed by all processes.
+        // However, this approach may introduce synchronization overhead, particularly if processes complete particle motion at different rates
         MPI_Barrier(MPI_COMM_WORLD);
 
         // Crystallize particles
@@ -188,7 +190,7 @@ int main(int argc, char **argv)
     if (my_rank == 0)
     {
         // Create image from grid
-        array_to_ppm(width, height, grid, "dla_mpi.ppm");
+        array_to_ppm(width, height, grid, "dla_3mpi.ppm");
         printf("Execution time = %d us\n", (int)(my_elapsed * 1000000));
     }
     // Free allocated memory

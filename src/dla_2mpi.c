@@ -155,17 +155,23 @@ int main(int argc, char **argv)
                 }
             }
         }
-        // MPI_Barrier(MPI_COMM_WORLD);
+        // In this version, exclusive locks are employed to update the grid within the shared memory.
+        // While exclusive locks provide a simple and effective means of synchronization,
+        // they introduce too much performance overhead
+
         // Crystallize particles
         if (n_to_crystalize > 0)
         {
+            MPI_Win_unlock(0, window);
+            MPI_Win_lock(MPI_LOCK_EXCLUSIVE, 0, 0, window);
             for (int i = 0; i < n_to_crystalize; i++)
             {
                 grid_ptr[width * particles_to_crystalize[i].y + particles_to_crystalize[i].x] = CRYSTAL;
             }
+            MPI_Win_unlock(0, window);
+            MPI_Win_lock(MPI_LOCK_SHARED, 0, 0, window);
             n_to_crystalize = 0;
         }
-        // MPI_Barrier(MPI_COMM_WORLD);
     }
 
     // Sync updates to shared memory
@@ -183,7 +189,7 @@ int main(int argc, char **argv)
     if (my_rank == 0)
     {
         // Create image from grid
-        array_to_ppm(width, height, grid, "dla_mpi.ppm");
+        array_to_ppm(width, height, grid, "dla_2mpi.ppm");
         printf("Execution time = %d us\n", (int)(my_elapsed * 1000000));
     }
     // Free allocated memory
