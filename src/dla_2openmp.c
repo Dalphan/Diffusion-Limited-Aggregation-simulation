@@ -121,7 +121,7 @@ int main(int argc, char **argv)
     gettimeofday(&stop, NULL);
 
     // Create image from grid
-    grid_to_ppm(width, height, grid, "dla_openmp_faster.ppm");
+    grid_to_ppm(width, height, grid, "dla_2openmp.ppm");
 
     // Free the allocated memory
     for (int i = 0; i < height; i++)

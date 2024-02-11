@@ -13,7 +13,7 @@ LIB_DIR := lib
 # Targets
 SERIAL := $(BIN_DIR)/serial
 OPENMP := $(BIN_DIR)/openmp
-FASTER_OPENMP := $(BIN_DIR)/faster_openmp
+FASTER_OPENMP := $(BIN_DIR)/2openmp
 MPI := $(BIN_DIR)/mpi
 CIMG_WRAPPER := $(BIN_DIR)/cimg_wrapper.so
 
@@ -23,12 +23,15 @@ CIMG_WRAPPER := $(BIN_DIR)/cimg_wrapper.so
 all: $(SERIAL) $(OPENMP) $(FASTER_OPENMP) $(MPI) $(CIMG_WRAPPER)
 
 serial: $(SRC_DIR)/dla_serial.c $(SRC_DIR)/dla.h | $(BIN_DIR)
+	$(CC) $(CFLAGS) $< -o $(BIN_DIR)/$@
+
+serial_video: $(SRC_DIR)/dla_serial.c $(SRC_DIR)/dla.h | $(BIN_DIR)
 	$(CC) $(CFLAGS) $< -o $(BIN_DIR)/$@ -L$(BIN_DIR) -lcimg_wrapper -lstdc++ -lX11
 
 openmp: $(SRC_DIR)/dla_openmp.c $(SRC_DIR)/dla.h | $(BIN_DIR)
 	$(CC) $(CFLAGS) -fopenmp $< -o $(BIN_DIR)/$@
 
-faster_openmp: $(SRC_DIR)/dla_openmp_faster.c $(SRC_DIR)/dla.h | $(BIN_DIR)
+2openmp: $(SRC_DIR)/dla_2openmp.c $(SRC_DIR)/dla.h | $(BIN_DIR)
 	$(CC) $(CFLAGS) -fopenmp $< -o $(BIN_DIR)/$@
 
 mpi: $(SRC_DIR)/dla_mpi.c $(SRC_DIR)/dla.h | $(BIN_DIR)
@@ -69,7 +72,7 @@ run_openmp_s: $(OPENMP)
 	$(OPENMP) 500 500 50000 22000 -1 -1 12
 	feh $(RES_DIR)/dla_openmp.ppm
 
-run_faster_openmp_s: $(FASTER_OPENMP)
+run_2openmp_s: $(FASTER_OPENMP)
 	$(FASTER_OPENMP) 500 500 50000 22000 -1 -1 12
 	feh $(RES_DIR)/dla_openmp_faster.ppm
 

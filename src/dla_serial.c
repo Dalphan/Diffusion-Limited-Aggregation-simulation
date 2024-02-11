@@ -1,7 +1,8 @@
 #include "dla.h"
 
-extern void saveOneFrame(int **grid, int width, int height);
-extern void saveVideo(int frames);
+// VIDEO
+// extern void saveOneFrame(int **grid, int width, int height);
+// extern void saveVideo(int frames);
 
 int main(int argc, char **argv)
 {
