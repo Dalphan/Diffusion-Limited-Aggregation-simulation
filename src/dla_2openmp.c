@@ -47,7 +47,7 @@ int main(int argc, char **argv)
 #pragma omp parallel num_threads(thread_count)
     {
         int my_rank = omp_get_thread_num();
-        unsigned int my_seed = time(NULL) + my_rank;
+        unsigned int my_seed = time(NULL) ^ my_rank;
 
         // Giving each particles a random position on the grid, parallelized for each thread
 #pragma omp for

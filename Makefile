@@ -15,6 +15,8 @@ SERIAL := $(BIN_DIR)/serial
 OPENMP := $(BIN_DIR)/openmp
 FASTER_OPENMP := $(BIN_DIR)/2openmp
 MPI := $(BIN_DIR)/mpi
+MPI2 := $(BIN_DIR)/2mpi
+MPI3 := $(BIN_DIR)/3mpi
 CIMG_WRAPPER := $(BIN_DIR)/cimg_wrapper.so
 
 # Phony targets
@@ -78,3 +80,5 @@ run_2openmp_s: $(FASTER_OPENMP)
 
 run_mpi: $(MPI)
 	mpirun -np 12 $(MPI) 100 100 10000 1500 -1 -1
+
+
