@@ -111,6 +111,7 @@ int main(int argc, char **argv)
                     }
                 }
             }
+            #pragma omp barrier
         }
     }
     // ------------------- End point of measurement

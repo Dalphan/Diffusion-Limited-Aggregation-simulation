@@ -13,14 +13,16 @@ LIB_DIR := lib
 # Targets
 SERIAL := $(BIN_DIR)/serial
 OPENMP := $(BIN_DIR)/openmp
-FASTER_OPENMP := $(BIN_DIR)/2openmp
+2OPENMP := $(BIN_DIR)/2openmp
 MPI := $(BIN_DIR)/mpi
+2MPI := $(BIN_DIR)/2mpi
+3MPI := $(BIN_DIR)/3mpi
 CIMG_WRAPPER := $(BIN_DIR)/cimg_wrapper.so
 
 # Phony targets
 .PHONY: all clean
 
-all: $(SERIAL) $(OPENMP) $(FASTER_OPENMP) $(MPI) $(CIMG_WRAPPER)
+all: $(SERIAL) $(OPENMP) $(2OPENMP) $(MPI) $(2MPI) $(3MPI) 
 
 serial: $(SRC_DIR)/dla_serial.c $(SRC_DIR)/dla.h | $(BIN_DIR)
 	$(CC) $(CFLAGS) $< -o $(BIN_DIR)/$@
@@ -51,30 +53,56 @@ $(BIN_DIR):
 
 clean:
 	rm -rf $(BIN_DIR)/*
+ 
 
-run_serial_xs: $(SERIAL)
-	$(SERIAL) 100 100 10000 2000
+serial_test: $(SERIAL)
+	$(SERIAL) 500 500 50000 20000 250 250
 	feh $(RES_DIR)/dla_serial.ppm
 
-run_serial_s: $(SERIAL)
-	$(SERIAL) 500 500 50000 22000
-	feh $(RES_DIR)/dla_serial.ppm
-
-run_serial_xl: $(SERIAL)
-	$(SERIAL) 1000 1000 100000 100000
-	feh $(RES_DIR)/dla_serial.ppm
-
-run_openmp_xs: $(OPENMP)
-	$(OPENMP) 100 100 10000 2000 -1 -1 12
+openmp_test5: $(OPENMP)
+	$(OPENMP) 500 500 50000 20000 250 250 5
 	feh $(RES_DIR)/dla_openmp.ppm
 
-run_openmp_s: $(OPENMP)
-	$(OPENMP) 500 500 50000 22000 -1 -1 12
+openmp_test10: $(OPENMP)
+	$(OPENMP) 500 500 50000 20000 250 250 10
 	feh $(RES_DIR)/dla_openmp.ppm
 
-run_2openmp_s: $(FASTER_OPENMP)
-	$(FASTER_OPENMP) 500 500 50000 22000 -1 -1 12
-	feh $(RES_DIR)/dla_openmp_faster.ppm
+2openmp_test5: $(2OPENMP)
+	$(2OPENMP) 500 500 50000 20000 250 250 5
+	feh $(RES_DIR)/dla_2openmp.ppm
 
-run_mpi: $(MPI)
-	mpirun -np 12 $(MPI) 100 100 10000 1500 -1 -1
+2openmp_test10: $(2OPENMP)
+	$(2OPENMP) 500 500 50000 20000 250 250 10
+	feh $(RES_DIR)/dla_2openmp.ppm
+
+mpi_test5: $(MPI)
+	mpirun -np 5 $(MPI) 500 500 50000 20000 250 250
+	feh $(RES_DIR)/dla_mpi.ppm
+
+mpi_test10: $(MPI)
+	mpirun -np 5 $(MPI) 500 500 50000 20000 250 250
+	feh $(RES_DIR)/dla_mpi.ppm
+
+2mpi_test5: $(2MPI)
+	mpirun -np 5 $(2MPI) 500 500 50000 20000 250 250
+	feh $(RES_DIR)/dla_2mpi.ppm
+
+2mpi_test10: $(2MPI)
+	mpirun -np 10 $(2MPI) 500 500 50000 20000 250 250
+	feh $(RES_DIR)/dla_2mpi.ppm
+
+3mpi_test5: $(3MPI)
+	mpirun -np 5 $(3MPI) 500 500 50000 20000 250 250
+	feh $(RES_DIR)/dla_3mpi.ppm
+
+3mpi_test10: $(3MPI)
+	mpirun -np 10 $(3MPI) 500 500 50000 20000 250 250
+	feh $(RES_DIR)/dla_3mpi.ppm
+
+big_2openmp: $(2OPENMP)
+	$(2OPENMP) 1000 1000 100000 100000 500 500 10
+	feh $(RES_DIR)/dla_2openmp.ppm
+
+big_3mpi: $(3MPI)
+	$(3MPI) 1000 1000 100000 100000 500 500 10
+	feh $(RES_DIR)/dla_3mpi.ppm

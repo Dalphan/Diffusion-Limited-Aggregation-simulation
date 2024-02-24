@@ -103,6 +103,8 @@ int main(int argc, char **argv)
     particles_t particles_to_crystalize[width];
     int n_to_crystalize = 0;
 
+    MPI_Barrier(shcomm);
+
     // Starting simulation
     MPI_Win_lock(MPI_LOCK_SHARED, 0, 0, window);
     for (int i = 0; i < iterations; i++)

@@ -155,6 +155,8 @@ int main(int argc, char **argv)
             MPI_Win_flush(0, window);
             n_to_crystalize = 0;
         }
+
+        MPI_Barrier(MPI_COMM_WORLD);
     }
     MPI_Win_unlock(0, window);
 

@@ -13,3 +13,16 @@ Verificare la correttezza degli algoritmi implementati, confrontando i risultati
 una versione single-thread. Valutare le prestazioni degli algoritmi sviluppati in termini di speed-up
 ed efficienza al variare del numero di processi/thread e delle dimensioni del problema (numero di
 particelle, numero di iterazioni e dimensioni della griglia).
+
+Usage
+-----
+To run, first download the folder:
+    $ git clone https://github.com/Dalphan/Diffusion-Limited-Aggregation-simulation.git
+    $ cd Diffusion-Limited-Aggregation-simulation
+    $ make all
+
+The executables will be in /bin directory.
+
+Requirements
+------------
+OpenMP and MPI
