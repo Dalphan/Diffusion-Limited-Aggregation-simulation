@@ -1,28 +1,37 @@
 # Diffusion-Limited-Aggregation-simulation
-Progetto di Programmazione di Sistemi Embedded e Multicore 
+Project for Embedded and Multicore Systems Programming
 
-Diffusion-limited aggregation (DLA) è un processo di formazione di cristalli nel quale le particelle si
-muovono in uno spazio 2D con moto browniano (cioè in modo casuale) e si combinano tra loro
-quando si toccano. DLA può essere simulato utilizzando una griglia 2D in cui ogni cella può essere
-occupata da uno o più particelle in movimento. Una particella diventa parte di un cristallo (e si
-ferma) quando si trova in prossimità di un cristallo già formato. I parametri di base della simulazione
-sono la dimensione della griglia 2D, il numero iniziale di particelle, il numero di iterazioni e il "seme"
-cristallino iniziale. Implementare l’algoritmo di DLA utilizzando 2 tra i seguenti approcci: MPI,
-PThread/OpenMP, CUDA.
-Verificare la correttezza degli algoritmi implementati, confrontando i risultati con quelli ottenuti da
-una versione single-thread. Valutare le prestazioni degli algoritmi sviluppati in termini di speed-up
-ed efficienza al variare del numero di processi/thread e delle dimensioni del problema (numero di
-particelle, numero di iterazioni e dimensioni della griglia).
+<div align="center">
+  <img src="https://img.shields.io/badge/C-A8B9CC?style=for-the-badge&logo=c&logoColor=white">
+  <img src="https://img.shields.io/badge/OpenMP-0071C5?style=for-the-badge&logo=openmp&logoColor=white">
+  <img src="https://img.shields.io/badge/MPI-76B900?style=for-the-badge&logo=mpi&logoColor=white">
+</div>
 
-Usage
------
+<div align="center">
+  <img src="./res/Esempio.png">
+  <br>
+  <em>Example image from the execution of the project</em>
+</div>
+
+## Description
+Diffusion-limited aggregation (DLA) is a process of crystal formation in which particles move in a 2D space with Brownian motion (i.e., randomly) and combine with each other when they touch. DLA can be simulated using a 2D grid where each cell can be occupied by one or more moving particles. A particle becomes part of a crystal (and stops) when it is in proximity to an already formed crystal. The basic parameters of the simulation are the size of the 2D grid, the initial number of particles, the number of iterations, and the initial "seed" crystal. Implement the DLA algorithm using 2 of the following approaches: MPI, PThread/OpenMP, CUDA.
+
+Verify the correctness of the implemented algorithms, comparing the results with those obtained from a single-thread version. Evaluate the performance of the developed algorithms in terms of speed-up and efficiency as the number of processes/threads and the problem dimensions (number of particles, number of iterations, and grid size) vary.
+
+## Usage
+
 To run, first download the folder:
+
     $ git clone https://github.com/Dalphan/Diffusion-Limited-Aggregation-simulation.git
     $ cd Diffusion-Limited-Aggregation-simulation
     $ make all
 
-The executables will be in /bin directory.
+The executables will be in the /bin directory.
+
+The Makefile included in this project contains several pre-configured commands that serve as examples of how to use the application. These commands are designed to demonstrate various features and usage scenarios.
 
 Requirements
 ------------
 OpenMP and MPI
+
+The images resulting from the simulation will be found in the /res folder
